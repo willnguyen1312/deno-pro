@@ -14,7 +14,7 @@ async function collectTsFiles(directory: string) {
   return tsFiles;
 }
 // const regex = /i18n\("(.+)\"/g;
-const regex = /i18n\("([^"]*)"\)/g;
+const regex = /i18n\.translate\(\s*["'`]([^"'`]*)["'`]/g;
 
 function isEmptyObject(obj: any): boolean {
   return (

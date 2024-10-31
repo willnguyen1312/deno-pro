@@ -11,5 +11,15 @@
     "nested": {
       "key": "Deep nested key"
     }
+  },
+  "super": {
+    "nested": {
+      "one": "{count} business day",
+      "other": "{count} business days"
+    }
+  },
+  "plural": {
+    "one": "{count} business day",
+    "other": "{count} business days"
   }
 }
