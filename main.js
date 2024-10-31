@@ -25,16 +25,16 @@ function removeEmptyNested(obj) {
 const regex = /i18n\.translate\(\s*["'`]([^"'`]*)["'`]/g;
 
 async function main() {
-  const tsFiles = [];
+  const collectedFiles = [];
 
   for await (const entry of walk(Deno.cwd(), {
-    exts: [".ts"],
+    exts: [".tsx", ".ts"],
     includeDirs: true,
   })) {
-    tsFiles.push(entry.path);
+    collectedFiles.push(entry.path);
   }
 
-  for (const file of tsFiles) {
+  for (const file of collectedFiles) {
     Deno.readTextFile(file).then((content) => {
       const setOfKey = new Set(
         [...content.matchAll(regex)].map((match) => match[1])
