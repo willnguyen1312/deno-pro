@@ -1,43 +1,20 @@
 import { join } from "jsr:@std/path";
 import { walk } from "jsr:@std/fs/walk";
 
-async function collectTsFiles(directory) {
-  const tsFiles = [];
-
-  for await (const entry of walk(directory, {
-    exts: [".ts"],
-    includeDirs: true,
-  })) {
-    tsFiles.push(entry.path);
-  }
-
-  return tsFiles;
-}
-
-const regex = /i18n\.translate\(\s*["'`]([^"'`]*)["'`]/g;
-
-function isEmptyObject(obj) {
-  return (
-    obj !== null &&
-    typeof obj === "object" &&
-    !Array.isArray(obj) &&
-    Object.keys(obj).length === 0
-  );
-}
-
 function removeEmptyNested(obj) {
   const result = {};
 
   for (const [key, value] of Object.entries(obj)) {
-    if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-      // Recursively clean nested objects
+    if (typeof value === "object" && value != null) {
       const cleaned = removeEmptyNested(value);
-      // Only add non-empty objects to result
-      if (!isEmptyObject(cleaned)) {
+      const isEmpty =
+        cleaned != null &&
+        typeof cleaned === "object" &&
+        Object.keys(cleaned).length === 0;
+      if (!isEmpty) {
         result[key] = cleaned;
       }
     } else {
-      // Keep non-object values as is
       result[key] = value;
     }
   }
@@ -45,9 +22,17 @@ function removeEmptyNested(obj) {
   return result;
 }
 
+const regex = /i18n\.translate\(\s*["'`]([^"'`]*)["'`]/g;
+
 async function main() {
-  const currentDirectory = Deno.cwd() + "/src";
-  const tsFiles = await collectTsFiles(currentDirectory);
+  const tsFiles = [];
+
+  for await (const entry of walk(Deno.cwd(), {
+    exts: [".ts"],
+    includeDirs: true,
+  })) {
+    tsFiles.push(entry.path);
+  }
 
   for (const file of tsFiles) {
     Deno.readTextFile(file).then((content) => {
@@ -88,7 +73,7 @@ async function main() {
           }
 
           const cleanedData = removeEmptyNested(filteredData);
-          // Write back to the file
+
           Deno.writeTextFile(
             join(currentDirectory, "translations/cleaned_en.json"),
             JSON.stringify(cleanedData, null, 2)
