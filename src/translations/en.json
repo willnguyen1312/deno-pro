@@ -1,0 +1,15 @@
+{
+  "hello": {
+    "world": "Hello World"
+  },
+  "hi": "Hi",
+  "unused": "This key is not used in the code",
+  "nested": {
+    "key": "Nested key"
+  },
+  "deep": {
+    "nested": {
+      "key": "Deep nested key"
+    }
+  }
+}
