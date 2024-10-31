@@ -28,8 +28,10 @@ async function main() {
   const collectedFiles = [];
   const currentDirectory = Deno.cwd();
 
+  // Skip test files
   for await (const entry of walk(currentDirectory, {
     exts: [".tsx", ".ts"],
+    skip: [/\.test\./],
     includeDirs: true,
   })) {
     collectedFiles.push(entry.path);
@@ -43,47 +45,56 @@ async function main() {
 
       // Get current directory of the file
       const currentDirectory = dirname(file);
+
+      const fileName = join(currentDirectory, "translations/en.json");
+
       if (setOfKey.size) {
-        import(join(currentDirectory, "translations/en.json"), {
-          with: { type: "json" },
-        })
-          .then((translations) => {
-            const data = translations.default;
+        Deno.lstat(fileName)
+          .then(() => {
+            import(fileName, {
+              with: { type: "json" },
+            })
+              .then((translations) => {
+                const data = translations.default;
 
-            const allPaths = [];
+                const allPaths = [];
 
-            function dfs(obj, path = "") {
-              for (const key in obj) {
-                if (typeof obj[key] === "object") {
-                  dfs(obj[key], path + key + ".");
-                } else {
-                  allPaths.push(path + key);
+                function dfs(obj, path = "") {
+                  for (const key in obj) {
+                    if (typeof obj[key] === "object") {
+                      dfs(obj[key], path + key + ".");
+                    } else {
+                      allPaths.push(path + key);
+                    }
+                  }
                 }
-              }
-            }
 
-            dfs(data);
+                dfs(data);
 
-            const unusedKeys = allPaths.filter((key) => !setOfKey.has(key));
+                const unusedKeys = allPaths.filter((key) => !setOfKey.has(key));
 
-            for (const key of unusedKeys) {
-              const keys = key.split(".");
-              let obj = data;
-              for (let i = 0; i < keys.length - 1; i++) {
-                obj = obj[keys[i]];
-              }
-              delete obj[keys[keys.length - 1]];
-            }
+                for (const key of unusedKeys) {
+                  const keys = key.split(".");
+                  let obj = data;
+                  for (let i = 0; i < keys.length - 1; i++) {
+                    obj = obj[keys[i]];
+                  }
+                  delete obj[keys[keys.length - 1]];
+                }
 
-            const cleanedData = removeEmptyNested(data);
+                const cleanedData = removeEmptyNested(data);
 
-            Deno.writeTextFile(
-              join(currentDirectory, "translations/cleaned_en.json"),
-              JSON.stringify(cleanedData, null, 2)
-            );
+                Deno.writeTextFile(
+                  join(currentDirectory, "translations/cleaned_en.json"),
+                  JSON.stringify(cleanedData, null, 2)
+                );
+              })
+              .catch((err) => {
+                // console.error(err);
+              });
           })
-          .catch((err) => {
-            console.error(err);
+          .catch(() => {
+            // console.error(`File ${fileName} not found`);
           });
       }
     });
