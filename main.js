@@ -1,4 +1,4 @@
-import { join } from "jsr:@std/path";
+import { join, dirname } from "jsr:@std/path";
 import { walk } from "jsr:@std/fs/walk";
 
 function removeEmptyNested(obj) {
@@ -42,7 +42,7 @@ async function main() {
       );
 
       // Get current directory of the file
-      const currentDirectory = file.substring(0, file.lastIndexOf("/"));
+      const currentDirectory = dirname(file);
       if (setOfKey.size) {
         import(join(currentDirectory, "translations/en.json"), {
           with: { type: "json" },
@@ -65,18 +65,17 @@ async function main() {
             dfs(data);
 
             const unusedKeys = allPaths.filter((key) => !setOfKey.has(key));
-            const filteredData = structuredClone(data);
 
             for (const key of unusedKeys) {
               const keys = key.split(".");
-              let obj = filteredData;
+              let obj = data;
               for (let i = 0; i < keys.length - 1; i++) {
                 obj = obj[keys[i]];
               }
               delete obj[keys[keys.length - 1]];
             }
 
-            const cleanedData = removeEmptyNested(filteredData);
+            const cleanedData = removeEmptyNested(data);
 
             Deno.writeTextFile(
               join(currentDirectory, "translations/cleaned_en.json"),
