@@ -26,8 +26,9 @@ const regex = /i18n\.translate\(\s*["'`]([^"'`]*)["'`]/g;
 
 async function main() {
   const collectedFiles = [];
+  const currentDirectory = Deno.cwd();
 
-  for await (const entry of walk(Deno.cwd(), {
+  for await (const entry of walk(currentDirectory, {
     exts: [".tsx", ".ts"],
     includeDirs: true,
   })) {
@@ -40,45 +41,51 @@ async function main() {
         [...content.matchAll(regex)].map((match) => match[1])
       );
 
+      // Get current directory of the file
+      const currentDirectory = file.substring(0, file.lastIndexOf("/"));
       if (setOfKey.size) {
         import(join(currentDirectory, "translations/en.json"), {
           with: { type: "json" },
-        }).then((translations) => {
-          const data = translations.default;
+        })
+          .then((translations) => {
+            const data = translations.default;
 
-          const allPaths = [];
+            const allPaths = [];
 
-          function dfs(obj, path = "") {
-            for (const key in obj) {
-              if (typeof obj[key] === "object") {
-                dfs(obj[key], path + key + ".");
-              } else {
-                allPaths.push(path + key);
+            function dfs(obj, path = "") {
+              for (const key in obj) {
+                if (typeof obj[key] === "object") {
+                  dfs(obj[key], path + key + ".");
+                } else {
+                  allPaths.push(path + key);
+                }
               }
             }
-          }
 
-          dfs(data);
+            dfs(data);
 
-          const unusedKeys = allPaths.filter((key) => !setOfKey.has(key));
-          const filteredData = structuredClone(data);
+            const unusedKeys = allPaths.filter((key) => !setOfKey.has(key));
+            const filteredData = structuredClone(data);
 
-          for (const key of unusedKeys) {
-            const keys = key.split(".");
-            let obj = filteredData;
-            for (let i = 0; i < keys.length - 1; i++) {
-              obj = obj[keys[i]];
+            for (const key of unusedKeys) {
+              const keys = key.split(".");
+              let obj = filteredData;
+              for (let i = 0; i < keys.length - 1; i++) {
+                obj = obj[keys[i]];
+              }
+              delete obj[keys[keys.length - 1]];
             }
-            delete obj[keys[keys.length - 1]];
-          }
 
-          const cleanedData = removeEmptyNested(filteredData);
+            const cleanedData = removeEmptyNested(filteredData);
 
-          Deno.writeTextFile(
-            join(currentDirectory, "translations/cleaned_en.json"),
-            JSON.stringify(cleanedData, null, 2)
-          );
-        });
+            Deno.writeTextFile(
+              join(currentDirectory, "translations/cleaned_en.json"),
+              JSON.stringify(cleanedData, null, 2)
+            );
+          })
+          .catch((err) => {
+            console.error(err);
+          });
       }
     });
   }
