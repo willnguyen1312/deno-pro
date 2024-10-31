@@ -1,8 +1,8 @@
 import { join } from "jsr:@std/path";
 import { walk } from "jsr:@std/fs/walk";
 
-async function collectTsFiles(directory: string) {
-  const tsFiles: string[] = [];
+async function collectTsFiles(directory) {
+  const tsFiles = [];
 
   for await (const entry of walk(directory, {
     exts: [".ts"],
@@ -13,10 +13,10 @@ async function collectTsFiles(directory: string) {
 
   return tsFiles;
 }
-// const regex = /i18n\("(.+)\"/g;
+
 const regex = /i18n\.translate\(\s*["'`]([^"'`]*)["'`]/g;
 
-function isEmptyObject(obj: any): boolean {
+function isEmptyObject(obj) {
   return (
     obj !== null &&
     typeof obj === "object" &&
@@ -25,9 +25,8 @@ function isEmptyObject(obj: any): boolean {
   );
 }
 
-// Function to remove empty nested objects
-function removeEmptyNested(obj: any) {
-  const result: any = {};
+function removeEmptyNested(obj) {
+  const result = {};
 
   for (const [key, value] of Object.entries(obj)) {
     if (typeof value === "object" && value !== null && !Array.isArray(value)) {
@@ -62,10 +61,9 @@ async function main() {
         }).then((translations) => {
           const data = translations.default;
 
-          // DFS to collect all the keys
-          const allPaths: string[] = [];
+          const allPaths = [];
 
-          function dfs(obj: any, path = "") {
+          function dfs(obj, path = "") {
             for (const key in obj) {
               if (typeof obj[key] === "object") {
                 dfs(obj[key], path + key + ".");
