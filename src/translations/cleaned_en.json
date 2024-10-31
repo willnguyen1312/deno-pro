@@ -2,5 +2,9 @@
   "hello": {
     "world": "Hello World"
   },
-  "hi": "Hi"
+  "hi": "Hi",
+  "stuff": {
+    "one": "stuff",
+    "other": "stuffs"
+  }
 }

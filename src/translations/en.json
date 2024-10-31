@@ -21,5 +21,9 @@
   "plural": {
     "one": "{count} business day",
     "other": "{count} business days"
+  },
+  "stuff": {
+    "one": "stuff",
+    "other": "stuffs"
   }
 }

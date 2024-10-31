@@ -22,14 +22,13 @@ function removeEmptyNested(obj) {
   return result;
 }
 
-const regex = /i18n\.translate\(\s*["'`]([^"'`]*)["'`]/g;
+const regexKey = /i18n\.translate\(\s*["'`]([^"'`]*)["'`]/g;
+const regexCallTranslate = /i18n\.translate/g;
 
 async function main() {
   const collectedFiles = [];
-  const currentDirectory = Deno.cwd();
 
-  // Skip test files
-  for await (const entry of walk(currentDirectory, {
+  for await (const entry of walk(Deno.cwd(), {
     exts: [".tsx", ".ts"],
     skip: [/\.test\./],
     includeDirs: true,
@@ -40,15 +39,18 @@ async function main() {
   for (const file of collectedFiles) {
     Deno.readTextFile(file).then((content) => {
       const setOfKey = new Set(
-        [...content.matchAll(regex)].map((match) => match[1])
+        [...content.matchAll(regexKey)].map((match) => match[1])
       );
+
+      const numberOFTranslateCalls = [...content.matchAll(regexCallTranslate)]
+        .length;
 
       // Get current directory of the file
       const currentDirectory = dirname(file);
 
       const fileName = join(currentDirectory, "translations/en.json");
 
-      if (setOfKey.size) {
+      if (setOfKey.size && numberOFTranslateCalls === setOfKey.size) {
         Deno.lstat(fileName)
           .then(() => {
             import(fileName, {
@@ -61,7 +63,10 @@ async function main() {
 
                 function dfs(obj, path = "") {
                   for (const key in obj) {
-                    if (typeof obj[key] === "object") {
+                    const value = obj[key];
+                    const isPlural = value && value.one && value.other;
+
+                    if (typeof obj[key] === "object" && !isPlural) {
                       dfs(obj[key], path + key + ".");
                     } else {
                       allPaths.push(path + key);

@@ -10,3 +10,4 @@ i18n.translate("hello.world", {
   count: 10,
 });
 i18n.translate("hi");
+i18n.translate("stuff");

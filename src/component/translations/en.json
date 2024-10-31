@@ -1,5 +1,7 @@
 {
   "message": {
     "bye": "chao"
-  }
+  },
+  "dynamic1": "One",
+  "dynamic2": "Two"
 }
